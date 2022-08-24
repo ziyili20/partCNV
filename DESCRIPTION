@@ -1,0 +1,14 @@
+Package: partCNV
+Type: Package
+Title: Infer locally aneuploid cells using single cell RNA-seq data
+Version: 0.1.0
+Author: Ziyi Li and Ruoxing Li
+Maintainer: Ziyi Li <zli16@mdanderson.org>
+Description: This package uses a statistical framework for rapid and accurate detection of aneuploid cells with local copy number deletion or amplification. Our method uses an EM algorithm with mixtures of Poisson distributions while incorporating cytogenetics information (e.g., regional deletion or amplification) to guide the classification (partCNV). When applicable, we further improve the accuracy by integrating a Hidden Markov Model for feature selection (partCNVH).
+Imports: stats, data.table, depmixS4, Seurat, Matrix, GenomicRanges
+Suggests: BiocStyle, rmarkdown, knitr, IRanges
+VignetteBuilder: knitr
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.1

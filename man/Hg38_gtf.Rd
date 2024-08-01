@@ -13,6 +13,9 @@ An object of class \code{"data frame"}
 \usage{
 data(Hg38_gtf)
 }
+\value{
+Gene location data for Hg38 genome
+}
 \description{
 Gene location data for Hg38 genome
 }

@@ -10,6 +10,9 @@ An object of class \code{"data frame"}
 \usage{
 data(SimData)
 }
+\value{
+Simulation data to examplify the usage of the method
+}
 \description{
 Simulation data to examplify the usage of the method
 }

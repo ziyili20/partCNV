@@ -15,12 +15,16 @@
 #' @param maxniter The maximum number of iterations of the EM algorithm.
 #' @param navg Number of genes used for rolling average.
 #'
+#' @importFrom data.table frollmean
+#' @importFrom depmixS4 depmix fit posterior
+#'  
 #' @return A vector with the cell status inferred by the method, 1 is aneuploid and 0 is diploid.
 #' @export
 #' @examples
 #' cytoloc <- GetCytoLocation(cyto_feature = "chr20(q11.1-q13.1)")
-#' \donttest{exprout <- GetExprCountCyto(cytoloc_output = cytoloc, Counts = Counts, normalization = TRUE, qt_cutoff = 0.99)}
-#' \donttest{status <- partCNVH(int_counts = exprout$ProcessedCount, cyto_type = "del", cyto_p = 0.2, navg = 50)}
+#' data(SimData)
+#' exprout <- GetExprCountCyto(cytoloc_output = cytoloc, Counts = as.matrix(SimData), normalization = TRUE, qt_cutoff = 0.99)
+#' status <- partCNVH(int_counts = exprout$ProcessedCount, cyto_type = "del", cyto_p = 0.2, navg = 50)
 #'
 partCNVH <- function(int_counts,
                      cyto_type,
@@ -30,7 +34,7 @@ partCNVH <- function(int_counts,
                      navg = 50) {
 
     if (nrow(int_counts) <= 20) {
-        warning(paste0("The number of genes is only ", nrow(int_counts), ". It maybe better to use partCNV only."))
+        warning("The number of genes is only ", nrow(int_counts), ". It maybe better to use partCNV only.")
     }
 
     EMlabel <- partCNV(int_counts = int_counts,
@@ -40,34 +44,34 @@ partCNVH <- function(int_counts,
                      maxniter = maxniter)
 
     if(cyto_type == "del") {
-        meanratio = rowMeans(int_counts[, EMlabel == 0])/rowMeans(int_counts[, EMlabel == 1])
-        meanratio2 = data.table::frollmean(meanratio, n = navg, na.rm = TRUE, align = "center")
+        meanratio <- rowMeans(int_counts[, EMlabel == 0])/rowMeans(int_counts[, EMlabel == 1])
+        meanratio2 <- frollmean(meanratio, n = navg, na.rm = TRUE, align = "center")
         mysumdata <- data.frame(rowmean = meanratio2)
         initStatus <- rep(1, length(mysumdata$rowmean))
         initStatus[mysumdata$rowmean > stats::median(mysumdata$rowmean)] <- 2
-        mod <- depmixS4::depmix(rowmean ~ 1, data = mysumdata, nstates = 2, initdata = initStatus, trstart = c(0.9,0.1,0.1,0.9)) # use gaussian() for normally distributed data
+        mod <- depmix(rowmean ~ 1, data = mysumdata, nstates = 2, initdata = initStatus, trstart = c(0.9,0.1,0.1,0.9)) # use gaussian() for normally distributed data
         fit.mod <- depmixS4::fit(mod)
-        est.states <- depmixS4::posterior(fit.mod)
+        est.states <- posterior(fit.mod)
 
         if(mean(mysumdata$rowmean[est.states$state == 2], na.rm = TRUE) < mean(mysumdata$rowmean[est.states$state == 1], na.rm = TRUE)) {
-            myidealstate = 1
+            myidealstate <- 1
         } else {
-            myidealstate = 2
+            myidealstate <- 2
         }
     } else if(cyto_type == "amp") {
-        meanratio = rowMeans(int_counts[, EMlabel == 1])/rowMeans(int_counts[, EMlabel == 0])
-        meanratio2 = data.table::frollmean(meanratio, n = navg, na.rm = TRUE, align = "center")
+        meanratio <- rowMeans(int_counts[, EMlabel == 1])/rowMeans(int_counts[, EMlabel == 0])
+        meanratio2 <- frollmean(meanratio, n = navg, na.rm = TRUE, align = "center")
         mysumdata <- data.frame(rowmean = meanratio2)
         initStatus <- rep(1, length(mysumdata$rowmean))
         initStatus[mysumdata$rowmean > stats::median(mysumdata$rowmean)] <- 2
-        mod <- depmixS4::depmix(rowmean ~ 1, data = mysumdata, nstates = 2, initdata = initStatus, trstart = c(0.9,0.1,0.1,0.9)) # use gaussian() for normally distributed data
+        mod <- depmix(rowmean ~ 1, data = mysumdata, nstates = 2, initdata = initStatus, trstart = c(0.9,0.1,0.1,0.9)) # use gaussian() for normally distributed data
         fit.mod <- depmixS4::fit(mod)
-        est.states <- depmixS4::posterior(fit.mod)
+        est.states <- posterior(fit.mod)
 
         if(mean(mysumdata$rowmean[est.states$state == 2], na.rm = TRUE) < mean(mysumdata$rowmean[est.states$state == 1], na.rm = TRUE)) {
-            myidealstate = 1
+            myidealstate <- 1
         } else {
-            myidealstate = 2
+            myidealstate <- 2
         }
     }
 

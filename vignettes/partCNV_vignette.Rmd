@@ -23,6 +23,21 @@ Single-cell RNA sequencing is becoming an increasingly common tool to investigat
 
 In this package we present partCNV/partCNVH, a statistical framework for rapid and accurate detection of aneuploid cells with local copy number deletion or amplification. Our method uses an EM algorithm with mixtures of Poisson distributions while incorporating **cytogenetics information** to guide the classification (partCNV). When applicable, we further improve the accuracy by integrating a Hidden Markov Model for feature selection (partCNVH).
 
+# Installation
+The package can be installed using `BiocManager` by the following commands
+```{r setup, eval=FALSE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("partCNV")
+```
+
+Alternatively, the package can be installed using `devtools` and launched by
+```{r, results=FALSE, warning=FALSE, message=FALSE, eval=FALSE}
+library(devtools)
+install_github("rx-li/partCNV")
+```
+
 
 # Understand your cytogenetics data
 
@@ -54,6 +69,11 @@ library(Seurat)
 Seurat_obj <- NormalizeData(Your_SeuratObj, normalization.method = "LogNormalize", scale.factor = 10000)
 Counts = Seurat_obj@assays$RNA@counts
 ```
+If you start with a SingleCellExperiment object, the counts can be normalized using function `NormalizeCounts`.
+
+```{r, echo=TRUE, eval=FALSE}
+Counts <- NormalizeCounts(Your_SingleCellExperimentObj, scale_factor=10000)
+```
 
 # Run partCNV
 
@@ -65,7 +85,7 @@ res <- GetCytoLocation(cyto_feature = "chr20(q11.1-q13.1)")
 
 Then let's subset the data and normalize the data:
 ```{r s2, echo=TRUE, eval=TRUE}
-GEout <- GetExprCountCyto(cytoloc_output = res, Counts = SimData, normalization = TRUE, qt_cutoff = 0.99)
+GEout <- GetExprCountCyto(cytoloc_output = res, Counts = as.matrix(SimData), normalization = TRUE, qt_cutoff = 0.99)
 ```
 For this function, the qt_cutoff is to filter out the cells with very low expressions. 0.99 here means that we filter out cells that only express in 1% (1-0.99) cells. Make this `qt_cutoff` larger if your total gene number within the region is small. 
 
@@ -106,7 +126,7 @@ sim_seurat$partCNV_label <- factor(sim_seurat$partCNV_label, levels = c(1,0), la
 
 ```{r s6, echo=TRUE, eval=TRUE, message=FALSE, warning=FALSE}
 library(ggplot2)
-DimPlot(sim_seurat, reduction = "umap", group = "partCNV_label") + ggtitle(paste0("partCNV (", signif(p1,2)*100, "%)"))+ theme(legend.position = "none")
+DimPlot(sim_seurat, reduction = "umap", group = "partCNV_label") + ggtitle(paste0("partCNV (", signif(p1,2)*100, "%)"))
 ```
 
 # Run partCNVH
@@ -116,7 +136,7 @@ Compared with partCNV, partCNVH added an additional step of feature selection. T
 
 ```{r s11, echo=TRUE, eval=TRUE}
 res <- GetCytoLocation(cyto_feature = "chr20(q11.1-q13.1)")
-GEout <- GetExprCountCyto(cytoloc_output = res, Counts = SimData, normalization = TRUE, qt_cutoff = 0.99)
+GEout <- GetExprCountCyto(cytoloc_output = res, Counts = as.matrix(SimData), normalization = TRUE, qt_cutoff = 0.99)
 ```
 
 For this function, the qt_cutoff is to filter out the cells with very low expressions. 0.99 here means that we filter out cells that only express in 1% (1-0.99) cells. Make this `qt_cutoff` larger if your total gene number within the region is small. 
@@ -159,7 +179,7 @@ sim_seurat$partCNVH_label <- factor(sim_seurat$partCNVH_label, levels = c(1,0), 
 
 ```{r s16, echo=TRUE, eval=TRUE, message=FALSE, warning=FALSE}
 library(ggplot2)
-DimPlot(sim_seurat, reduction = "umap", group = "partCNVH_label") + ggtitle(paste0("partCNVH (", signif(p2,2)*100, "%)"))+ theme(legend.position = "none")
+DimPlot(sim_seurat, reduction = "umap", group = "partCNVH_label") + ggtitle(paste0("partCNVH (", signif(p2,2)*100, "%)"))
 ```
 
 # Session info {.unnumbered}

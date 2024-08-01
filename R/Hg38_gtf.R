@@ -14,6 +14,7 @@
 #' (\href{https://pubmed.ncbi.nlm.nih.gov/30357393/}{PubMed})
 #'
 #' @source \href{https://www.gencodegenes.org/human/}{Gencode Archive}
+#' @return Gene location data for Hg38 genome
 #'
 #' @examples
 #' data(Hg38_gtf)

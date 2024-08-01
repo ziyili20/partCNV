@@ -36,9 +36,9 @@ and select the genes that are located in the interested region. This procedure
 happens after applying GetCytoLocation().
 }
 \examples{
-### example 1
 res <- GetCytoLocation(cyto_feature = "chr20(q11.1-q13.1)")
-## No test:
-# GetExprCountCyto(cytoloc_output = res, Counts = Counts, normalization = TRUE, qt_cutoff = 0.99)
+data(SimData)
+GetExprCountCyto(cytoloc_output = res, Counts = as.matrix(SimData), normalization = TRUE, 
+qt_cutoff = 0.99)
 
 }

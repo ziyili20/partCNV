@@ -17,11 +17,13 @@
 #'
 #' @return A list with normalized and ordered gene expression for the interested
 #' cytogenetics region.
+#' @importFrom magrittr %>%
 #' @export
 #' @examples
 #' res <- GetCytoLocation(cyto_feature = "chr20(q11.1-q13.1)")
-#' ## No test:
-#' \donttest{GetExprCountCyto(cytoloc_output = res, Counts = Counts, normalization = TRUE, qt_cutoff = 0.99)}
+#' data(SimData)
+#' GetExprCountCyto(cytoloc_output = res, Counts = as.matrix(SimData), normalization = TRUE, 
+#' qt_cutoff = 0.99)
 #'
 GetExprCountCyto <- function(cytoloc_output,
                              Counts = NULL,
@@ -44,8 +46,8 @@ GetExprCountCyto <- function(cytoloc_output,
             rownames(normalizedCounts) <- rownames(Counts)
         }
 
-        fCounts <- normalizedCounts[stats::na.omit(match(cytoloc_output$overGeneName, rownames(normalizedCounts))), ]
-        tmpGL <- Hg38_gtf[match(rownames(fCounts), Hg38_gtf$gene_name), ]
+        fCounts <- normalizedCounts[which(rownames(normalizedCounts) %in% cytoloc_output$overGeneName), ]
+        tmpGL <- Hg38_gtf[which(Hg38_gtf$gene_name %in% rownames(fCounts)), ]
         GeneLocation <- tmpGL$start
         fCounts_ord <- fCounts[order(GeneLocation),]
         GeneLocation_ord <- GeneLocation[order(GeneLocation)]

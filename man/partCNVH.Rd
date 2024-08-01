@@ -32,12 +32,9 @@ Cells will be grouped into two groups, locally aneuploid (status = 1) and
 diploid (status = 0).
 }
 \examples{
-### example 1
 cytoloc <- GetCytoLocation(cyto_feature = "chr20(q11.1-q13.1)")
-## No test:
-# exprout <- GetExprCountCyto(cytoloc_output = cytoloc, Counts = Counts,
-#                             normalization = TRUE, qt_cutoff = 0.99)
-# status <- partCNVH(int_counts = exprout$ProcessedCount, cyto_type = "del",
-#                    cyto_p = 0.2, navg = 50)
+data(SimData)
+exprout <- GetExprCountCyto(cytoloc_output = cytoloc, Counts = as.matrix(SimData), normalization = TRUE, qt_cutoff = 0.99)
+status <- partCNVH(int_counts = exprout$ProcessedCount, cyto_type = "del", cyto_p = 0.2, navg = 50)
 
 }

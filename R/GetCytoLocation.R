@@ -20,6 +20,9 @@
 #' when cyto_feature is null.
 #' @param end ending location of the interested region. This is only used
 #' when cyto_feature is null.
+#' 
+#' @importFrom AnnotationHub AnnotationHub 
+#' @importFrom GenomicRanges GRanges findOverlaps
 #'
 #' @return If the first format of cyto_feature is provided, the starting and
 #' ending location as well as the number of genes overlapped with be provided.
@@ -40,10 +43,11 @@ GetCytoLocation <- function(cyto_feature = NULL,
                             start = NULL,
                             end = NULL) {
 
+    gene <- data.frame(AnnotationHub()[["AH53178"]])
+    cytoBand_Hg38 <- gene[, c("seqnames", "start", "end", "name", "gieStain")]
+    colnames(cytoBand_Hg38) <- c("chr", "start", "end", "cytoband", "V5")  
+    
     Hg38_gtf <- NULL
-    cytoBand_Hg38 <- NULL
-
-    data("cytoBand_Hg38", envir=environment())
     data("Hg38_gtf", envir=environment())
 
     GeneNum_index <- 0
@@ -58,10 +62,10 @@ GetCytoLocation <- function(cyto_feature = NULL,
             if(length(grep(cyto_feature, cytoBand_Hg38$chr)) == 0) {
                 stop("Please provide a valid cyto_feature input!")
             } else {
-                message(paste0("Print out all cytogenetics features on ", cyto_feature, ":"))
+                message("Print out all cytogenetics features on ", cyto_feature, ":")
                 tmpout <- cytoBand_Hg38[grep(cyto_feature, cytoBand_Hg38$chr), ]
                 rownames(tmpout) <- NULL
-                print(tmpout)
+                message(tmpout)
                 return(list(cytogeneticsInfo = tmpout,
                             Downstream_index = Downstream_index))
             }
@@ -104,17 +108,17 @@ GetCytoLocation <- function(cyto_feature = NULL,
 
     if(GeneNum_index == 1) {
 
-        gene.gr <- GenomicRanges::GRanges(seqnames = Hg38_gtf$seqnames,
+        gene.gr <- GRanges(seqnames = Hg38_gtf$seqnames,
                                           ranges = IRanges::IRanges(start = as.numeric(Hg38_gtf$start),
                                                                     end = as.numeric(Hg38_gtf$end)))
-        cyto.gr <- GenomicRanges::GRanges(seqnames = chr_location,
+        cyto.gr <- GRanges(seqnames = chr_location,
                                           ranges = IRanges::IRanges(start = cyto_start,
                                                                     end = cyto_end))
-        FOout <- as.data.frame(GenomicRanges::findOverlaps(cyto.gr, gene.gr))
+        FOout <- as.data.frame(findOverlaps(cyto.gr, gene.gr))
         overGene <- unique(Hg38_gtf$gene_id[unique(FOout$subjectHits)])
         overGeneName <- unique(Hg38_gtf$gene_name[unique(FOout$subjectHits)])
-        message(paste0("Interested region: ", chr_location, ":", cyto_start, "-", cyto_end, "."))
-        message(paste0("A total of ", length(overGeneName), " genes are located in this region."))
+        message("Interested region: ", chr_location, ":", cyto_start, "-", cyto_end, ".")
+        message("A total of ", length(overGeneName), " genes are located in this region.")
         Downstream_index <- 1
 
         return(list(chr_location = chr_location,

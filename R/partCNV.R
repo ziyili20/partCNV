@@ -11,14 +11,17 @@
 #' @param tau The variance of the prior information. Default is 0.1. If you have less confidence,
 #' specify a larger tau, e.g., 10.
 #' @param maxniter The maximum number of iterations of the EM algorithm.
+#' 
+#' @importFrom Seurat CreateSeuratObject NormalizeData ScaleData RunPCA FindNeighbors Idents FindClusters
 #'
 #' @return A vector with the cell status inferred by the method, 1 is aneuploid and 0 is diploid.
 #' @export
 #' @examples
 #' ### example 1
 #' cytoloc <- GetCytoLocation(cyto_feature = "chr20(q11.1-q13.1)")
-#' # exprout <- GetExprCountCyto(cytoloc_output = cytoloc, Counts = Counts, normalization = TRUE, qt_cutoff = 0.99)
-#' # status <- partCNV(int_counts = exprout$ProcessedCount, cyto_type = "del", cyto_p = 0.2)
+#' data(SimData)
+#' exprout <- GetExprCountCyto(cytoloc_output = cytoloc, Counts = as.matrix(SimData), normalization = TRUE, qt_cutoff = 0.99)
+#' status <- partCNV(int_counts = exprout$ProcessedCount, cyto_type = "del", cyto_p = 0.2)
 #'
 partCNV <- function(int_counts,
                   cyto_type,
@@ -33,27 +36,27 @@ partCNV <- function(int_counts,
     int_counts <- round(as.matrix(int_counts))
 
     ### initialization with PCA+louvian
-    input = int_counts
+    input <- int_counts
     if(is.null(rownames(int_counts))) {
-        rownames(input) = paste0("gene", 1:nrow(input))
+        rownames(input) <- paste0("gene", seq_len(nrow(input)))
     }
     if(is.null(colnames(int_counts))) {
-        colnames(input) = paste0("cell", 1:ncol(input))
+        colnames(input) <- paste0("cell", seq_len(ncol(input)))
     }
-    sim <- Seurat::CreateSeuratObject(counts = input, project = "sim", min.cells = 0, min.features = 0)
-    sim <- Seurat::NormalizeData(sim)
-    sim <- Seurat::ScaleData(sim, features = rownames(input))
-    sim <-Seurat:: RunPCA(sim, features = rownames(input))
-    sim <- Seurat::FindNeighbors(sim, dims = 1:10)
+    sim <- CreateSeuratObject(counts = input, project = "sim", min.cells = 0, min.features = 0)
+    sim <- NormalizeData(sim)
+    sim <- ScaleData(sim, features = rownames(input))
+    sim <- RunPCA(sim, features = rownames(input))
+    sim <- FindNeighbors(sim, dims = seq_len(10))
     reso_vec <- seq(0.001, 0.5, by = 0.01)
-    K = 1
-    j = 1
+    K <- 1
+    j <- 1
     while(K == 1) {
-        sim <- Seurat::FindClusters(sim, resolution = reso_vec[j], algorithm = 1)
-        j = j + 1
-        K = length(unique(Seurat::Idents(sim)))
+        sim <- FindClusters(sim, resolution = reso_vec[j], algorithm = 1)
+        j <- j + 1
+        K <- length(unique(Idents(sim)))
     }
-    cellZ <- Seurat::Idents(sim)
+    cellZ <- Idents(sim)
 
     mres <- tapply(colMeans(int_counts), cellZ, mean)
     qi <- sum(cellZ == names(which.min(mres)))/length(cellZ)
@@ -77,8 +80,8 @@ partCNV <- function(int_counts,
     pi_old <- rep(0, length(cellZ))
     diff_p <- 10
     niter <- 1
-    Ci = rep(0, length(cellZ))
-    diff_prp = 10
+    Ci <- rep(0, length(cellZ))
+    diff_prp <- 10
     ### update the parameters
     while(diff_p > 10^-5 & diff_prp > 10^-5 & niter < maxniter) {
         pi_old <- pi
@@ -117,22 +120,22 @@ partCNV <- function(int_counts,
         Ctotal <- sum(Ci)
 
         if(Ctotal == 0 | Ctotal == ncol(int_counts)) {
-            cutoff = stats::quantile(pi, qi)
+            cutoff <- stats::quantile(pi, qi)
             Ci <- ifelse(pi >= cutoff, 1, 0)
             Ctotal <- sum(Ci)
         }
 
-        niter = niter + 1
+        niter <- niter + 1
         diff_p <- abs(sum(pi - pi_old))
         diff_prp <- sum(abs(Ci - Cold))/ncell
-        print(paste0("qi = ", qi))
-        print(paste0("diff_p = ", diff_p))
-        print(Ctotal/ncell)
+        message("qi = ", qi)
+        message("diff_p = ", diff_p)
+        message(Ctotal/ncell)
     }
 
     if (tolower(cyto_type) == "amp") {
         Ci <- 1 - Ci
-        print(sum(Ci)/ncell)
+        message(sum(Ci)/ncell)
     }
 
     return(Ci)
